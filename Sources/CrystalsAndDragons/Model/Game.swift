@@ -8,132 +8,104 @@
 import Foundation
 
 final class Game {
-    private(set) var state: GameState = .playing
     private(set) var player: Player
     private let gameMap: GameMap
+    
+    var state: GameState {
+        if player.health <= 0 {
+            return .lost
+        }
+        if player.hasItem(named: "The Holy Grail", color: .gold) {
+            return .win
+        }
+        return .playing
+    }
 
     init(player: Player, gameMap: GameMap) {
         self.player = player
         self.gameMap = gameMap
     }
 
-    func movePlayer(direction: Direction) -> String {
-        guard gameMap.rooms[player.position.y][player.position.x].doors.contains(direction) else {
-            return "You can't go that way"
+    func movePlayer(direction: Direction) -> Result<GameEvent, GameError> {
+        let currentPosition = player.position
+
+        guard gameMap.rooms[currentPosition.y][currentPosition.x].doors.contains(direction) else {
+            return .failure(.blockedMove)
         }
 
+        let targetPosition: Position
         switch direction {
-        case .N:
-            player.position = Position(x: player.position.x, y: player.position.y + 1)
+        case .N: targetPosition = Position(x: currentPosition.x, y: currentPosition.y + 1)
 
-        case .S:
-            player.position = Position(x: player.position.x, y: player.position.y - 1)
+        case .S: targetPosition = Position(x: currentPosition.x, y: currentPosition.y - 1)
 
-        case .E:
-            player.position = Position(x: player.position.x + 1, y: player.position.y)
+        case .E: targetPosition = Position(x: currentPosition.x + 1, y: currentPosition.y)
 
-        case .W:
-            player.position = Position(x: player.position.x - 1, y: player.position.y)
+        case .W: targetPosition = Position(x: currentPosition.x - 1, y: currentPosition.y)
         }
 
-        return "You moved \(direction)"
+        guard gameMap.isValid(position: targetPosition) else {
+            return .failure(.blockedMove)
+        }
+
+        player.position = targetPosition
+        return .success(.moved(direction))
     }
 
-    func getItem(named itemName: String, color: Color) -> String {
-        var room = gameMap.rooms[player.position.y][player.position.x]
+    func getItem(named itemName: String, color: Color) -> Result<GameEvent, GameError> {
+        let room = gameMap.rooms[player.position.y][player.position.x]
 
         guard room.hasItem(named: itemName, color: color) else {
-            return "There's nothing like that here"
+            return .failure(.noSuchItemHere)
         }
 
-        let foundItem = room.deleteItem(named: itemName, color: color)
+        guard let foundItem = room.takeItem(named: itemName, color: color) else {
+            return .failure(.noSuchItemHere)
+        }
 
-        player.addItem(foundItem)
+        player.putItem(foundItem)
 
-        return "You picked up \(color) \(itemName)"
+        return .success(.itemPicked(name: itemName, color: color))
     }
 
-    func dropItem(named itemName: String, color: Color) -> String {
-        var room = gameMap.rooms[player.position.y][player.position.x]
+    func dropItem(named itemName: String, color: Color) -> Result<GameEvent, GameError> {
+        let room = gameMap.rooms[player.position.y][player.position.x]
 
         guard player.hasItem(named: itemName, color: color) else {
-            return "You don't have this item!"
+            return .failure(.noSuchItemInInventory)
+        }
+        
+        guard let droppedItem = player.takeItem(named: itemName, color: color) else {
+            return .failure(.noSuchItemInInventory)
         }
 
-        let droppedItem = player.deleteItem(named: itemName, color: color)
+        room.putItem(droppedItem)
 
-        room.addItem(droppedItem)
-
-        return "You dropped \(color) \(itemName)"
+        return .success(.itemDropped(name: itemName, color: color))
     }
 
-    func takeItemFromChest() -> String {
-        var room = gameMap.rooms[player.position.y][player.position.x]
+    func takeItemFromChest() -> Result<GameEvent, GameError> {
+        let room = gameMap.rooms[player.position.y][player.position.x]
 
-        for item in room.items {
-            if let chest = item as? Chest {
-                if !chest.isOpen && player.hasItem(named: "key", color: chest.color) {
-                    chest.open()
-                    guard let chestItem = chest.takeItemFromChest() else {
-                        return "Empty"
-                    }
-                    player.addItem(chestItem)
-                    return "You found \(chestItem.name) in the chest!"
-                }
-            }
+        guard let chest = room.items.compactMap({ $0 as? Chest }).first else {
+            return .failure(.noChestHere)
         }
-        return "No chest to open here"
-    }
 
-    func checkGameStatus() -> String? {
-        updateGameState()
-
-        switch state {
-        case .win:
-            return victory()
-        case .lost:
-            return gameOver()
-        case .playing:
-            return nil
+        if chest.isOpen {
+            return .success(.chestOpened(item: chest.takeItemFromChest()))
         }
-    }
 
-    private func victory() -> String {
-        return """
-
-        ╔══════════════════════════════════════════════════════╗
-        ║                                                      ║
-        ║     ✨✨✨  VICTORY! ✨✨✨                         ║
-        ║                                                      ║
-        ║     You have found the Holy Grail!                   ║
-        ║     The ancient prophecy is fulfilled...             ║
-        ║                                                      ║
-        ║     You are now the rightful ruler of the kingdom!   ║
-        ║                                                      ║
-        ╚══════════════════════════════════════════════════════╝
-
-        """
-    }
-
-    private func gameOver() -> String {
-        return """
-            
-        ╔══════════════════════════════════════════════════════╗
-        ║                                                      ║
-        ║            💀💀💀  GAME OVER  💀💀💀                ║
-        ║                                                      ║
-        ║            Your journey ends here...                 ║
-        ║                                                      ║
-        ╚══════════════════════════════════════════════════════╝
-            
-        """
-    }
-
-    private func updateGameState() {
-        if player.health <= 0 {
-            state = .lost
-        } else if player.hasItem(named: "grail", color: .gold) {
-            state = .win
+        guard player.hasItem(named: "key", color: chest.color) else {
+            return .failure(.noRightKey)
         }
+
+        chest.open()
+        let chestItem = chest.takeItemFromChest()
+        if let chestItem {
+            player.putItem(chestItem)
+        }
+        return .success(.chestOpened(item: chestItem))
     }
+
+    func checkGameStatus() -> GameState { return state }
 }

@@ -10,8 +10,8 @@ final class Chest: Item {
     let name: String = "chest"
     let description: String = "Mysterious chest"
     let color: Color
-    var item: (any Item)?
-    var isOpen: Bool = false
+    private(set) var item: (any Item)?
+    private(set) var isOpen: Bool = false
 
     init(color: Color, item: (any Item)?) {
         self.color = color
@@ -23,9 +23,7 @@ final class Chest: Item {
     }
 
     func takeItemFromChest() -> Item? {
-        guard item != nil else {
-            return nil
-        }
+        defer { item = nil }
         return item
     }
 }
