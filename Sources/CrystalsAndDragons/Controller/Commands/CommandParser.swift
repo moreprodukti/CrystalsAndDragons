@@ -13,79 +13,95 @@ public struct CommandParser {
 
     public func parse(command: String) -> Command {
         let tokens = normalizeTokens(input: command)
-        
+
         if tokens.contains("get") {
-            
-            guard let key = keyItem(input: tokens) else {
-                return .parseError
+            if let key = keyItem(input: tokens) {
+                return .get(itemName: key.0, color: key.1)
             }
             
-            return .get(itemName: key.0, color: key.1)
+            if let meat = meatItem(input: tokens) {
+                return .get(itemName: meat.0, color: meat.1)
+            }
+            
+            return .parseError
         }
-        
+
         if tokens.contains("drop") {
-            
-            guard let key = keyItem(input: tokens) else {
-                return .parseError
+            if let key = keyItem(input: tokens) {
+                return .drop(itemName: key.0, color: key.1)
             }
             
-            return .drop(itemName: key.0, color: key.1)
+            if let meat = meatItem(input: tokens) {
+                return .drop(itemName: meat.0, color: meat.1)
+            }
+            
+            return .parseError
         }
-        
+
         if tokens.contains("inv") {
             return .inventory
         }
-        
+
         if tokens.contains("quit") {
             return .quit
         }
-        
+
         if tokens.contains("open") {
             guard let itemColor = parseColor(input: tokens) else {
                 return .parseError
             }
             return .open(color: itemColor)
         }
-        
+
         guard let dir = parseDirection(input: tokens) else {
             return .parseError
         }
         return .move(dir)
     }
-    
-    
-    
+
     private func normalizeTokens(input: String) -> [String] {
-          return input
-              .lowercased()
-              .replacingOccurrences(of: ",", with: " ")
-              .replacingOccurrences(of: ".", with: " ")
-              .split(whereSeparator: { $0.isWhitespace })
-              .map(String.init)
+        return stripANSIEscapeCodes(from: input)
+            .lowercased()
+            .replacingOccurrences(of: ",", with: " ")
+            .replacingOccurrences(of: ".", with: " ")
+            .split(whereSeparator: { $0.isWhitespace })
+            .map(String.init)
     }
-    
+
+    private func stripANSIEscapeCodes(from input: String) -> String {
+        let pattern = #"\u{001B}\[[0-9;]*m"#
+        return input.replacingOccurrences(
+            of: pattern,
+            with: "",
+            options: .regularExpression
+        )
+    }
+
     private func parseColor(input: [String]) -> Color? {
         var itemColor: Color? = nil
-        
+
         if input.contains("blue") {
             itemColor = .blue
         }
-        
+
         if input.contains("red") {
             itemColor = .red
         }
-        
+
         if input.contains("yellow") {
             itemColor = .yellow
         }
-        
+
         if input.contains("green") {
             itemColor = .green
         }
         
+        if input.contains("roasted") {
+            itemColor = .roasted
+        }
         return itemColor
     }
-    
+
     private func parseDirection(input: [String]) -> Direction? {
         if input.contains("n") {
             return .N
@@ -101,7 +117,7 @@ public struct CommandParser {
         }
         return nil
     }
-    
+
     private func keyItem(input: [String]) -> (String, Color)? {
         guard input.contains("key") else {
             return nil
@@ -111,5 +127,16 @@ public struct CommandParser {
             return nil
         }
         return ("key", itemColor)
+    }
+    
+    private func meatItem(input: [String]) -> (String, Color)? {
+        guard input.contains("hearty") && input.contains("meat")else {
+            return nil
+        }
+
+        guard let itemColor = parseColor(input: input) else {
+            return nil
+        }
+        return ("hearty meat", itemColor)
     }
 }

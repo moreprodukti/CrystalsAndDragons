@@ -10,7 +10,7 @@ import Foundation
 public final class Game {
     private var player: Player
     private let gameMap: GameMap
-    
+
     var state: GameState {
         if player.health <= 0 {
             return .lost
@@ -75,7 +75,7 @@ public final class Game {
         guard player.hasItem(named: itemName, color: color) else {
             return .failure(.noSuchItemInInventory)
         }
-        
+
         guard let droppedItem = player.dropItem(named: itemName, color: color) else {
             return .failure(.noSuchItemInInventory)
         }
@@ -107,26 +107,26 @@ public final class Game {
         }
         return .success(.chestOpened(item: chestItem))
     }
-    
+
     public func openInventory() -> [any Item] {
         return player.items
     }
-    
+
     public func getPlayerHP() -> Int {
         return player.health
     }
-    
+
     public func getPlayerPosition() -> Position {
         return player.position
     }
-    
+
     public func getRoomItems() -> [any Item] {
         return gameMap.getRoomItems(player.position)
     }
-    
+
     public func getRoomDirections() -> Set<Direction> {
         return gameMap.getRoomDirections(player.position)
     }
-    
+
     public func checkGameStatus() -> GameState { return state }
 }

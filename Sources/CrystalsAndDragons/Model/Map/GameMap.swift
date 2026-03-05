@@ -13,15 +13,15 @@ final class GameMap {
     init(rooms: [[Room]]) {
         self.rooms = rooms
     }
-    
-    public func getRoomItems(_ position: Position) -> [any Item] {
+
+    func getRoomItems(_ position: Position) -> [any Item] {
         return rooms[position.y][position.x].items
     }
-    
-    public func getRoomDirections(_ position: Position) -> Set<Direction> {
+
+    func getRoomDirections(_ position: Position) -> Set<Direction> {
         return rooms[position.y][position.x].doors
     }
-    
+
     func isValid(position: Position) -> Bool {
         guard position.y >= 0, position.y < rooms.count else {
             return false

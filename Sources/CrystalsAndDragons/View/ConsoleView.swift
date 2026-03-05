@@ -8,7 +8,24 @@
 import Foundation
 
 public final class ConsoleView {
+    private let ansiReset = "\u{001B}[0m"
+
     public init() {}
+
+    public func clearScreen() {
+        print("\u{001B}[2J\u{001B}[H", terminator: "")
+    }
+
+    public func showRoomCountPrompt() {
+        print("Hello! Let's play the game! First enter number of rooms:")
+    }
+
+    public func readRoomCount() -> Int? {
+        guard let input = readLine() else {
+            return nil
+        }
+        return Int(input)
+    }
 
     public func readCommand() -> String? {
         guard let input = readLine() else {
@@ -18,12 +35,20 @@ public final class ConsoleView {
     }
 
     public func showMessage(_ message: ViewMessage) {
-        print(message.text)
+        print("\(render(message: message))\n")
     }
-    
+
+    public func showInvalidRoomCount() {
+        print("Invalid room count")
+    }
+
+    public func showGenerationFailed(_ error: Error) {
+        print("Failed to generate game: \(error)")
+    }
+
     public func victory() {
         print("""
-        
+
         ╔══════════════════════════════════════════════════════╗
         ║                                                      ║
         ║     ✨✨✨  VICTORY! ✨✨✨                          ║
@@ -37,7 +62,7 @@ public final class ConsoleView {
 
         """)
     }
-    
+
     public func gameOver() {
         print("""
             
@@ -52,9 +77,13 @@ public final class ConsoleView {
         """)
     }
     
+    public func chooseAction() {
+        print("Your action? (N/S/W/E, open, get, drop, quit)\n")
+    }
+    
     public func showStartScreen() {
         print(#"""
-        
+
                                  CRYSTALS & DRAGONS   
                       
            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢤⡄            
@@ -80,10 +109,11 @@ public final class ConsoleView {
            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣿⣿⣧⠀⠛⠿⠿⠿⢿⣿⣿⢿⣿⣿⡿⠿⠿⢿⡟⠛⠿⠛⠛⠛⠟⠟⠛⠿⠿⠛⠟⠛⠻⠟⠟⠛⠋⠟⠻⠿⠿⠁
            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣷⣄⣀⣀⣀⣤⣴⣶⣶⣶⣾⣷⣾⠶⣤⣿⣶⣄
            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿⣿⣿⡛⣛⣉⣉⣀⣀⣀⣘⣛⣉⣉⠙⠃
-        
-        
+
+
         ╔════════════════════════════════════════════════════════════════════╗
-        ║                 ✨  WELCOME, BRAVE ADVENTURER!  ✨                 ║ 
+        ║                                                                    ║ 
+        ║                     WELCOME, BRAVE ADVENTURER!                     ║ 
         ║                                                                    ║    
         ║           The ancient dragon guards the legendary crystals...      ║
         ║                Find the Holy Grail and claim your destiny!         ║
@@ -96,8 +126,33 @@ public final class ConsoleView {
         ║         • drop <item>        - Drop item                           ║
         ║         • quit               - Exit game                           ║
         ║                                                                    ║
-        ║        Press [ENTER] to start your journey...                      ║
         ╚════════════════════════════════════════════════════════════════════╝    
         """#)
+    }
+
+    private func render(message: ViewMessage) -> String {
+        message.segments.map { segment in
+            guard let color = segment.color else {
+                return segment.text
+            }
+            return "\(ansiCode(for: color))\(segment.text)\(ansiReset)"
+        }.joined()
+    }
+
+    private func ansiCode(for color: ViewMessage.TextColor) -> String {
+        switch color {
+        case .red:
+            return "\u{001B}[31m"
+        case .green:
+            return "\u{001B}[32m"
+        case .blue:
+            return "\u{001B}[34m"
+        case .yellow:
+            return "\u{001B}[33m"
+        case .gold:
+            return "\u{001B}[93m"
+        case .roasted:
+            return "\u{001B}[38;5;52m"
+        }
     }
 }

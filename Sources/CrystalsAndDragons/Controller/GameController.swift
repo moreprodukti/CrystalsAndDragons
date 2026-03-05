@@ -12,86 +12,149 @@ import View
 public final class GameController {
     private let game: Game
     private let view: ConsoleView
-    private let parser = CommandParser()
+    private let parser: CommandParser
+    private let generator: GameGenerator
 
-    public init(game: Game, view: ConsoleView) {
+    public init(
+        game: Game,
+        view: ConsoleView,
+        parser: CommandParser = CommandParser(),
+        generator: GameGenerator = GameGenerator()
+    ) {
         self.game = game
         self.view = view
+        self.parser = parser
+        self.generator = generator
     }
 
-    public convenience init(roomCount: Int) throws {
-        let game = try GameGenerator().generate(roomCount: roomCount)
-        self.init(game: game, view: ConsoleView())
+    public convenience init(
+        roomCount: Int,
+        view: ConsoleView = ConsoleView(),
+        parser: CommandParser = CommandParser(),
+        generator: GameGenerator = GameGenerator()
+    ) throws {
+        let game = try generator.generate(roomCount: roomCount)
+        self.init(game: game, view: view, parser: parser, generator: generator)
     }
 
-    public func getCommand() -> Command {
+    public static func bootstrapConsoleController(
+        parser: CommandParser = CommandParser(),
+        generator: GameGenerator = GameGenerator()
+    ) -> GameController? {
+        let view = ConsoleView()
+        view.clearScreen()
+        view.showRoomCountPrompt()
+
+        guard
+            let roomCount = view.readRoomCount(),
+            roomCount > 0
+        else {
+            view.showInvalidRoomCount()
+            return nil
+        }
+
+        do {
+            return try GameController(
+                roomCount: roomCount,
+                view: view,
+                parser: parser,
+                generator: generator
+            )
+        } catch {
+            view.showGenerationFailed(error)
+            return nil
+        }
+    }
+
+    public func runGameLoop() {
+        view.showStartScreen()
+        view.showMessage(playerInfo())
+        view.showMessage(playerPosition())
+
+        while true {
+            let command = getCommand()
+            if case .quit = command {
+                break
+            }
+
+            let response = runCommand(command)
+            view.showMessage(response)
+            if isGameFinished() {
+                break
+            }
+            view.showMessage(playerInfo())
+            view.showMessage(playerPosition())
+        }
+    }
+
+    private func getCommand() -> Command {
+        view.chooseAction()
         guard let input = view.readCommand() else {
             return .parseError
         }
         return parser.parse(command: input)
     }
-    
-    public func runCommand(_ command: Command) -> ViewMessage {
+
+    private func runCommand(_ command: Command) -> ViewMessage {
         var commandResult: Result<GameEvent, GameError>
-        
+
         switch command {
-        case .move(let direction):
+        case let .move(direction):
             commandResult = game.movePlayer(direction: direction)
 
-        case .get(let itemName, let color):
+        case let .get(itemName, color):
             commandResult = game.getItem(named: itemName, color: color)
 
-        case .drop(let itemName, let color):
+        case let .drop(itemName, color):
             commandResult = game.dropItem(named: itemName, color: color)
 
-        case .open(_):
+        case .open:
             commandResult = game.takeItemFromChest()
 
         case .inventory:
             let items = game.openInventory()
-            
+
             if items.isEmpty {
                 return ViewMessage(text: "Inventory: Empty", kind: .info)
             } else {
-                let itemsStr = items.map { "\($0.color) \($0.name)"}
-                return ViewMessage(text: "Inventory: [\(itemsStr.joined(separator: ", "))]", kind: .info)
+                var segments = [ViewMessage.Segment(text: "Inventory: [")]
+                segments.append(contentsOf: itemSegments(for: items))
+                segments.append(ViewMessage.Segment(text: "]"))
+                return ViewMessage(segments: segments, kind: .info)
             }
+
         case .quit:
             return ViewMessage(text: "", kind: .info)
 
         case .parseError:
             return ViewMessage(text: "Can't parse command", kind: .error)
         }
-        
+
         return mapToViewMessage(commandResult)
     }
-    
-    public func sendResponse(_ response: ViewMessage) {
-        view.showMessage(response)
-    }
-    
-    public func playerInfo() -> ViewMessage {
+
+    private func playerInfo() -> ViewMessage {
         return ViewMessage(text: "HP: \(game.getPlayerHP())", kind: .info)
     }
-    
-    public func playerPosition() -> ViewMessage {
+
+    private func playerPosition() -> ViewMessage {
         let position = game.getPlayerPosition()
         let directions = game.getRoomDirections()
         let directionText = directions.map(directionText).joined(separator: ", ")
-        let items = game.getRoomItems().map { "\($0.color) \($0.name)" }
-        let itemsText = items.joined(separator: ", ")
+        let items = game.getRoomItems()
 
-        return ViewMessage(
-            text: "You are in the room [\(position.x), \(position.y)]. There are \(directions.count) doors: [\(directionText)]. Items in the room: [\(itemsText)]",
-            kind: .info
-        )
-    }
-    
-    public func startScreen() {
-        view.showStartScreen()
+        var segments = [
+            ViewMessage.Segment(
+                text: "You are in the room [\(position.x), \(position.y)]. There are \(directions.count) doors: [\(directionText)]. Items in the room: ["
+            )
+        ]
+        segments.append(contentsOf: itemSegments(for: items))
+        segments.append(ViewMessage.Segment(text: "]"))
+
+        return ViewMessage(segments: segments, kind: .info)
     }
 
-    public func isGameFinished() -> Bool {
+    private func isGameFinished() -> Bool {
         switch game.checkGameStatus() {
         case .playing:
             return false
@@ -103,7 +166,7 @@ public final class GameController {
             return true
         }
     }
-    
+
     private func directionText(_ d: Direction) -> String {
         switch d {
         case .N: return "N"
@@ -112,46 +175,94 @@ public final class GameController {
         case .W: return "W"
         }
     }
-    
+
     private func mapToViewMessage(_ result: Result<GameEvent, GameError>) -> ViewMessage {
         switch result {
         case let .success(event):
-            
             switch event {
             case let .itemPicked(name, color):
-                return ViewMessage(text: "You picked up \(color) \(name)", kind: .success)
-                
+                return ViewMessage(
+                    segments: [
+                        ViewMessage.Segment(text: "You picked up "),
+                        colorizeItem(name: name, color: color),
+                    ],
+                    kind: .success
+                )
+
             case let .itemDropped(name, color):
-                return ViewMessage(text: "You dropped up \(color) \(name)", kind: .success)
-                
+                return ViewMessage(
+                    segments: [
+                        ViewMessage.Segment(text: "You dropped "),
+                        colorizeItem(name: name, color: color),
+                    ],
+                    kind: .success
+                )
+
             case let .chestOpened(item):
                 if let item {
-                    return ViewMessage(text: "You found \(item.name) in the chest!", kind: .success)
+                    return ViewMessage(
+                        segments: [
+                            ViewMessage.Segment(text: "You found "),
+                            colorizeItem(name: item.name, color: item.color),
+                            ViewMessage.Segment(text: " in the chest!"),
+                        ],
+                        kind: .success
+                    )
                 }
                 return ViewMessage(text: "Empty", kind: .info)
-                
+
             case let .moved(direction):
                 return ViewMessage(text: "You moved \(direction)", kind: .info)
             }
-            
+
         case let .failure(error):
-            
             switch error {
             case .blockedMove:
                 return ViewMessage(text: "You can't go that way", kind: .warning)
-                
+
             case .noChestHere:
                 return ViewMessage(text: "No chest to open here", kind: .warning)
-                
+
             case .noRightKey:
                 return ViewMessage(text: "You don't have the right key", kind: .warning)
-                
+
             case .noSuchItemHere:
                 return ViewMessage(text: "There's nothing like that here", kind: .warning)
-                
+
             case .noSuchItemInInventory:
                 return ViewMessage(text: "You don't have this item!", kind: .warning)
             }
+        }
+    }
+
+    private func itemSegments(for items: [any Item]) -> [ViewMessage.Segment] {
+        var segments: [ViewMessage.Segment] = []
+
+        for (index, item) in items.enumerated() {
+            if index > 0 {
+                segments.append(ViewMessage.Segment(text: ", "))
+            }
+            segments.append(colorizeItem(name: item.name, color: item.color))
+        }
+
+        return segments
+    }
+
+    private func colorizeItem(name: String, color: Color) -> ViewMessage.Segment {
+        ViewMessage.Segment(
+            text: "\(color) \(name)",
+            color: mapToViewColor(color)
+        )
+    }
+
+    private func mapToViewColor(_ color: Color) -> ViewMessage.TextColor {
+        switch color {
+        case .red: return .red
+        case .green: return .green
+        case .blue: return .blue
+        case .yellow: return .yellow
+        case .gold: return .gold
+        case .roasted: return .roasted
         }
     }
 }

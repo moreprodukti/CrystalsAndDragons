@@ -75,7 +75,8 @@ public struct GameGenerator {
             let minimumRequired = stepsToKey + stepsKeyToChest
             let health = max(
                 10,
-                minimumRequired * Self.healthBufferMultiplier + Self.healthFlatBonus)
+                minimumRequired * Self.healthBufferMultiplier + Self.healthFlatBonus
+            )
 
             let colorsPool: [Color] = [.red, .green, .blue, .yellow]
             let pairColors = Array(colorsPool.shuffled().prefix(pairCount))
@@ -160,7 +161,7 @@ public struct GameGenerator {
                     guard !alreadyConnected else {
                         continue
                     }
-                    if Double.random(in: 0...1) < Self.extraEdgeChance {
+                    if Double.random(in: 0 ... 1) < Self.extraEdgeChance {
                         connect(cell, neighbor.cell, direction: neighbor.direction, doors: &doors)
                     }
                 }
@@ -271,11 +272,22 @@ public struct GameGenerator {
                             items.append(Key(color: pairColors[index]))
                         }
                     }
-                    
+
                     for index in 0 ..< min(chestCells.count, pairColors.count) {
                         if cell == chestCells[index] {
-                            let chestItem: (any Item)? = (index == grailPairIndex) ? Grail() : nil
-                            items.append(Chest(color: pairColors[index], item: chestItem))
+                            if index == grailPairIndex {
+                                items.append(Chest(color: pairColors[index], item: Grail()))
+                            } else {
+                                if Double.random(in: 0 ... 1) < 0.33 {
+                                    items.append(Chest(color: pairColors[index], item: Meat()))
+                                }
+                            }
+                        }
+                    }
+                    
+                    if !items.contains(where: { $0 is Chest }) {
+                        if Double.random(in: 0 ... 1) < 0.15 {
+                            items.append(Meat())
                         }
                     }
                 }
