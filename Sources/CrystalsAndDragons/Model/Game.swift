@@ -10,6 +10,8 @@ import Foundation
 public final class Game {
     private var player: Player
     private let gameMap: GameMap
+    private var forcedDarkExitDirection: Direction?
+    private var forcedDarkRoomPosition: Position?
 
     var state: GameState {
         if player.health <= 0 {
@@ -28,8 +30,18 @@ public final class Game {
 
     public func movePlayer(direction: Direction) -> Result<GameEvent, GameError> {
         let currentPosition = player.position
+        let currentRoom = gameMap.rooms[currentPosition.y][currentPosition.x]
 
-        guard gameMap.rooms[currentPosition.y][currentPosition.x].doors.contains(direction) else {
+        if currentRoom.isDark,
+           !canSeeRoom(currentPosition),
+           let forcedDirection = forcedDarkExitDirection,
+           isSamePosition(forcedDarkRoomPosition, currentPosition),
+           direction != forcedDirection
+        {
+            return .failure(.blockedMove)
+        }
+
+        guard currentRoom.doors.contains(direction) else {
             return .failure(.blockedMove)
         }
 
@@ -49,6 +61,14 @@ public final class Game {
         }
 
         player.position = targetPosition
+        let enteredRoom = gameMap.rooms[targetPosition.y][targetPosition.x]
+        if enteredRoom.isDark, !canSeeRoom(targetPosition) {
+            forcedDarkExitDirection = opposite(of: direction)
+            forcedDarkRoomPosition = targetPosition
+        } else {
+            forcedDarkExitDirection = nil
+            forcedDarkRoomPosition = nil
+        }
         player.health -= 1
         return .success(.moved(direction))
     }
@@ -132,6 +152,30 @@ public final class Game {
         return .success(.goldPicked(coins: coins))
     }
 
+    public func isRoomDark(_ position: Position) -> Bool {
+        let room = gameMap.rooms[position.y][position.x]
+        return room.isDark
+    }
+
+    public func canSeeRoom(_ position: Position) -> Bool {
+        let room = gameMap.rooms[position.y][position.x]
+        if !room.isDark {
+            return true
+        }
+        return player.hasItem(named: "torchlight", color: .bright)
+            || room.hasItem(named: "torchlight", color: .bright)
+    }
+
+    public func darkRoomEscapeDirection(_ position: Position) -> Direction? {
+        guard isRoomDark(position), !canSeeRoom(position) else {
+            return nil
+        }
+        guard isSamePosition(forcedDarkRoomPosition, position) else {
+            return nil
+        }
+        return forcedDarkExitDirection
+    }
+
     public func openInventory() -> [any Item] {
         return player.items
     }
@@ -161,4 +205,20 @@ public final class Game {
     }
 
     public func checkGameStatus() -> GameState { return state }
+
+    private func opposite(of direction: Direction) -> Direction {
+        switch direction {
+        case .N: return .S
+        case .S: return .N
+        case .E: return .W
+        case .W: return .E
+        }
+    }
+
+    private func isSamePosition(_ lhs: Position?, _ rhs: Position) -> Bool {
+        guard let lhs else {
+            return false
+        }
+        return lhs.x == rhs.x && lhs.y == rhs.y
+    }
 }

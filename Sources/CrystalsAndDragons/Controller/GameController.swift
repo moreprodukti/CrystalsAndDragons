@@ -78,7 +78,9 @@ public final class GameController {
             }
 
             let response = runCommand(command)
-            view.showMessage(response)
+            if !response.text.isEmpty {
+                view.showMessage(response)
+            }
             if isGameFinished() {
                 break
             }
@@ -96,6 +98,16 @@ public final class GameController {
     }
 
     private func runCommand(_ command: Command) -> ViewMessage {
+        let position = game.getPlayerPosition()
+        if game.isRoomDark(position), !game.canSeeRoom(position) {
+            switch command {
+            case .move, .quit:
+                break
+            default:
+                return ViewMessage(text: "", kind: .warning)
+            }
+        }
+
         var commandResult: Result<GameEvent, GameError>
 
         switch command {
@@ -165,6 +177,20 @@ public final class GameController {
 
     private func playerPosition() -> ViewMessage {
         let position = game.getPlayerPosition()
+
+        guard !game.isRoomDark(position) || game.canSeeRoom(position) else {
+            if let escape = game.darkRoomEscapeDirection(position) {
+                let segment = [
+                    ViewMessage.Segment(text: "Can’t see anything in this dark place! "),
+                    ViewMessage.Segment(text: "Only way out: [\(directionText(escape))]."),
+                ]
+                return ViewMessage(segments: segment, kind: .info)
+            }
+
+            let segment = [ViewMessage.Segment(text: "Can’t see anything in this dark place!")]
+            return ViewMessage(segments: segment, kind: .info)
+        }
+
         let directions = game.getRoomDirections()
         let directionText = directions.map(directionText).joined(separator: ", ")
         let items = game.getRoomItems()

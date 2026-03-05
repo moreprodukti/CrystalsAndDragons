@@ -10,12 +10,14 @@ final class Room {
     private(set) var gold: Int
     let doors: Set<Direction>
     let position: Position
+    let isDark: Bool
 
-    init(items: [any Item], doors: Set<Direction>, position: Position, gold: Int) {
+    init(items: [any Item], doors: Set<Direction>, position: Position, gold: Int, isDark: Bool) {
         self.items = items
         self.doors = doors
         self.position = position
         self.gold = gold
+        self.isDark = isDark
     }
 
     func hasItem(named itemName: String, color: Color) -> Bool {

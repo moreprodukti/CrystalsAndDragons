@@ -86,6 +86,7 @@ public struct GameGenerator {
                 cols: cols,
                 active: activeSet,
                 doors: doorGrid,
+                start: start,
                 keyCells: keyCells,
                 chestCells: chestCells,
                 pairColors: pairColors,
@@ -252,6 +253,7 @@ public struct GameGenerator {
         cols: Int,
         active: Set<Cell>,
         doors: [[Set<Direction>]],
+        start: Cell,
         keyCells: [Cell],
         chestCells: [Cell],
         pairColors: [Color],
@@ -266,6 +268,7 @@ public struct GameGenerator {
                 var gold = 0
                 let cell = Cell(x: x, y: y)
                 let isActive = active.contains(cell)
+                var isDark = false
 
                 if isActive {
                     for index in 0 ..< min(keyCells.count, pairColors.count) {
@@ -298,7 +301,11 @@ public struct GameGenerator {
                         gold = Int.random(in: 5 ... 20)
                     }
 
-                    if Double.random(in: 0 ... 1) < 0.10 {
+                    if cell != start, Double.random(in: 0 ... 1) < 0.10 {
+                        isDark = true
+                    }
+
+                    if !isDark, Double.random(in: 0 ... 1) < 0.10 {
                         items.append(Torchlight())
                     }
                 }
@@ -307,7 +314,8 @@ public struct GameGenerator {
                     items: items,
                     doors: isActive ? doors[y][x] : [],
                     position: Position(x: x, y: y),
-                    gold: gold
+                    gold: gold,
+                    isDark: isDark
                 )
                 row.append(room)
             }

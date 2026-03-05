@@ -169,9 +169,7 @@ public struct CommandParser {
             return nil
         }
 
-        guard let itemColor = parseColor(input: input) else {
-            return nil
-        }
+        let itemColor = parseColor(input: input) ?? .bright
         return ("torchlight", itemColor)
     }
 
