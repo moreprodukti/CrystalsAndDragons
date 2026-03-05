@@ -7,8 +7,8 @@
 
 import Foundation
 
-final class Game {
-    private(set) var player: Player
+public final class Game {
+    private var player: Player
     private let gameMap: GameMap
     
     var state: GameState {
@@ -26,7 +26,7 @@ final class Game {
         self.gameMap = gameMap
     }
 
-    func movePlayer(direction: Direction) -> Result<GameEvent, GameError> {
+    public func movePlayer(direction: Direction) -> Result<GameEvent, GameError> {
         let currentPosition = player.position
 
         guard gameMap.rooms[currentPosition.y][currentPosition.x].doors.contains(direction) else {
@@ -49,10 +49,11 @@ final class Game {
         }
 
         player.position = targetPosition
+        player.health -= 1
         return .success(.moved(direction))
     }
 
-    func getItem(named itemName: String, color: Color) -> Result<GameEvent, GameError> {
+    public func getItem(named itemName: String, color: Color) -> Result<GameEvent, GameError> {
         let room = gameMap.rooms[player.position.y][player.position.x]
 
         guard room.hasItem(named: itemName, color: color) else {
@@ -68,7 +69,7 @@ final class Game {
         return .success(.itemPicked(name: itemName, color: color))
     }
 
-    func dropItem(named itemName: String, color: Color) -> Result<GameEvent, GameError> {
+    public func dropItem(named itemName: String, color: Color) -> Result<GameEvent, GameError> {
         let room = gameMap.rooms[player.position.y][player.position.x]
 
         guard player.hasItem(named: itemName, color: color) else {
@@ -84,10 +85,10 @@ final class Game {
         return .success(.itemDropped(name: itemName, color: color))
     }
 
-    func takeItemFromChest() -> Result<GameEvent, GameError> {
+    public func takeItemFromChest() -> Result<GameEvent, GameError> {
         let room = gameMap.rooms[player.position.y][player.position.x]
 
-        guard let chest = room.items.items.compactMap({ $0 as? Chest }).first else {
+        guard let chest = room.items.compactMap({ $0 as? Chest }).first else {
             return .failure(.noChestHere)
         }
 
@@ -105,6 +106,10 @@ final class Game {
             player.putItem(chestItem)
         }
         return .success(.chestOpened(item: chestItem))
+    }
+    
+    public func openInventory() -> [any Item] {
+        return player.items
     }
 
     func checkGameStatus() -> GameState { return state }

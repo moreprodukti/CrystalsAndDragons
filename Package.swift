@@ -5,13 +5,39 @@ import PackageDescription
 
 let package = Package(
     name: "CrystalsAndDragons",
+    products: [
+        .executable(name: "CrystalsAndDragons", targets: ["App"])
+    ],
     targets: [
-        .executableTarget(
-            name: "CrystalsAndDragons",
-            path: "Sources/CrystalsAndDragons",
+        .target(
+            name: "Model",
+            path: "Sources/CrystalsAndDragons/Model",
             swiftSettings: [
                 .unsafeFlags(["-warnings-as-errors"])
             ]
+        ),
+        .target(
+            name: "View",
+            path: "Sources/CrystalsAndDragons/View",
+            swiftSettings: [
+                .unsafeFlags(["-warnings-as-errors"])
+            ]
+        ),
+        .target(
+            name: "Controller",
+            dependencies: ["Model", "View"],
+            path: "Sources/CrystalsAndDragons/Controller",
+            swiftSettings: [
+                .unsafeFlags(["-warnings-as-errors"])
+            ]
+        ),
+        .executableTarget(
+            name: "App",
+            dependencies: ["Controller"],
+            path: "Sources/CrystalsAndDragons/App",
+//            swiftSettings: [
+//                .unsafeFlags(["-warnings-as-errors"])
+//            ]
         ),
     ]
 )

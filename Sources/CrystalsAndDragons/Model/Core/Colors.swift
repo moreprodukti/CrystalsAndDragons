@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum Color {
+public enum Color {
     case red
     case green
     case blue

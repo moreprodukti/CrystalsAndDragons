@@ -10,23 +10,26 @@ import Foundation
 final class Player {
     var health: Int
     var position: Position
-    private(set) var inventory: Inventory
+    private(set) var items: [any Item]
 
-    init(health: Int, position: Position, inventory: [any Item]) {
+    init(health: Int, position: Position, items: [any Item]) {
         self.health = health
         self.position = position
-        self.inventory = Inventory(items: inventory)
+        self.items = items
     }
 
     func hasItem(named itemName: String, color: Color) -> Bool {
-        return inventory.hasItem(named: itemName, color: color)
+        return items.contains { $0.name == itemName && $0.color == color }
     }
 
     func putItem(_ item: any Item) {
-        inventory.add(item)
+        items.append(item)
     }
 
     func dropItem(named itemName: String, color: Color) -> (any Item)? {
-        return inventory.remove(named: itemName, color: color)
+        guard let index = items.firstIndex(where: { $0.name == itemName && $0.color == color }) else {
+            return nil
+        }
+        return items.remove(at: index)
     }
 }

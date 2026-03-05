@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum GameEvent {
+public enum GameEvent {
     case moved(Direction)
     case itemPicked(name: String, color: Color)
     case itemDropped(name: String, color: Color)

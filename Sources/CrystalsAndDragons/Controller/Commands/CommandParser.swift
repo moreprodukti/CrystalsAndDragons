@@ -6,15 +6,18 @@
 //
 
 import Foundation
+import Model
 
-struct CommandParser {
-    func parse(command: String) -> Command? {
+public struct CommandParser {
+    public init() {}
+
+    public func parse(command: String) -> Command {
         let tokens = normalizeTokens(input: command)
         
         if tokens.contains("get") {
             
             guard let key = keyItem(input: tokens) else {
-                return nil
+                return .parseError
             }
             
             return .get(itemName: key.0, color: key.1)
@@ -23,16 +26,15 @@ struct CommandParser {
         if tokens.contains("drop") {
             
             guard let key = keyItem(input: tokens) else {
-                return nil
+                return .parseError
             }
             
             return .drop(itemName: key.0, color: key.1)
         }
         
-        if tokens.contains("inventory") {
+        if tokens.contains("inv") {
             return .inventory
         }
-        
         
         if tokens.contains("quit") {
             return .quit
@@ -40,13 +42,13 @@ struct CommandParser {
         
         if tokens.contains("open") {
             guard let itemColor = parseColor(input: tokens) else {
-                return nil
+                return .parseError
             }
             return .open(color: itemColor)
         }
         
         guard let dir = parseDirection(input: tokens) else {
-            return nil
+            return .parseError
         }
         return .move(dir)
     }
@@ -104,8 +106,7 @@ struct CommandParser {
         guard input.contains("key") else {
             return nil
         }
-        let itemName = "key"
-        
+
         guard let itemColor = parseColor(input: input) else {
             return nil
         }
