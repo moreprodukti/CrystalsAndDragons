@@ -13,18 +13,15 @@ public final class GameController {
     private let game: Game
     private let view: ConsoleView
     private let parser: CommandParser
-    private let generator: GameGenerator
 
     public init(
         game: Game,
         view: ConsoleView,
-        parser: CommandParser = CommandParser(),
-        generator: GameGenerator = GameGenerator()
+        parser: CommandParser = CommandParser()
     ) {
         self.game = game
         self.view = view
         self.parser = parser
-        self.generator = generator
     }
 
     public convenience init(
@@ -34,7 +31,7 @@ public final class GameController {
         generator: GameGenerator = GameGenerator()
     ) throws {
         let game = try generator.generate(roomCount: roomCount)
-        self.init(game: game, view: view, parser: parser, generator: generator)
+        self.init(game: game, view: view, parser: parser)
     }
 
     public static func bootstrapConsoleController(
@@ -77,8 +74,7 @@ public final class GameController {
                 break
             }
 
-            let response = runCommand(command)
-            if !response.text.isEmpty {
+            if let response = runCommand(command) {
                 view.showMessage(response)
             }
             if isGameFinished() {
@@ -97,14 +93,14 @@ public final class GameController {
         return parser.parse(command: input)
     }
 
-    private func runCommand(_ command: Command) -> ViewMessage {
+    private func runCommand(_ command: Command) -> ViewMessage? {
         let position = game.getPlayerPosition()
         if game.isRoomDark(position), !game.canSeeRoom(position) {
             switch command {
             case .move, .quit:
                 break
             default:
-                return ViewMessage(text: "", kind: .warning)
+                return nil
             }
         }
 
@@ -127,8 +123,8 @@ public final class GameController {
         case let .eat(itemName, color):
             commandResult = game.eatItem(named: itemName, color: color)
 
-        case .open:
-            commandResult = game.takeItemFromChest()
+        case let .open(color):
+            commandResult = game.takeItemFromChest(color: color)
 
         case .inventory:
             let items = game.openInventory()
@@ -162,7 +158,7 @@ public final class GameController {
             }
 
         case .quit:
-            return ViewMessage(text: "", kind: .info)
+            return nil
 
         case .parseError:
             return ViewMessage(text: "Can't parse command", kind: .error)

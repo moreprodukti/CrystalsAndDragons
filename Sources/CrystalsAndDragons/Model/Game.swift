@@ -105,10 +105,10 @@ public final class Game {
         return .success(.itemDropped(name: itemName, color: color))
     }
 
-    public func takeItemFromChest() -> Result<GameEvent, GameError> {
+    public func takeItemFromChest(color: Color) -> Result<GameEvent, GameError> {
         let room = gameMap.rooms[player.position.y][player.position.x]
 
-        guard let chest = room.items.compactMap({ $0 as? Chest }).first else {
+        guard let chest = room.items.compactMap({ $0 as? Chest }).first(where: { $0.color == color }) else {
             return .failure(.noChestHere)
         }
 

@@ -98,32 +98,23 @@ public struct CommandParser {
     }
 
     private func parseColor(input: [String]) -> Color? {
-        var itemColor: Color? = nil
+        let colorTokens: [(String, Color)] = [
+            ("blue", .blue),
+            ("red", .red),
+            ("yellow", .yellow),
+            ("green", .green),
+            ("roasted", .roasted),
+            ("bright", .bright),
+        ]
 
-        if input.contains("blue") {
-            itemColor = .blue
-        }
+        let matched = colorTokens
+            .filter { input.contains($0.0) }
+            .map(\.1)
 
-        if input.contains("red") {
-            itemColor = .red
+        guard matched.count == 1 else {
+            return nil
         }
-
-        if input.contains("yellow") {
-            itemColor = .yellow
-        }
-
-        if input.contains("green") {
-            itemColor = .green
-        }
-
-        if input.contains("roasted") {
-            itemColor = .roasted
-        }
-
-        if input.contains("bright") {
-            itemColor = .bright
-        }
-        return itemColor
+        return matched[0]
     }
 
     private func parseDirection(input: [String]) -> Direction? {
@@ -169,8 +160,15 @@ public struct CommandParser {
             return nil
         }
 
-        let itemColor = parseColor(input: input) ?? .bright
-        return ("torchlight", itemColor)
+        guard let parsedColor = parseColor(input: input) else {
+            return ("torchlight", .bright)
+        }
+
+        guard parsedColor == .bright else {
+            return nil
+        }
+
+        return ("torchlight", .bright)
     }
 
     private func goldItem(input: [String]) -> (String, Color)? {
