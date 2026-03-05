@@ -75,7 +75,7 @@ final class Game {
             return .failure(.noSuchItemInInventory)
         }
         
-        guard let droppedItem = player.takeItem(named: itemName, color: color) else {
+        guard let droppedItem = player.dropItem(named: itemName, color: color) else {
             return .failure(.noSuchItemInInventory)
         }
 
@@ -87,7 +87,7 @@ final class Game {
     func takeItemFromChest() -> Result<GameEvent, GameError> {
         let room = gameMap.rooms[player.position.y][player.position.x]
 
-        guard let chest = room.items.compactMap({ $0 as? Chest }).first else {
+        guard let chest = room.items.items.compactMap({ $0 as? Chest }).first else {
             return .failure(.noChestHere)
         }
 

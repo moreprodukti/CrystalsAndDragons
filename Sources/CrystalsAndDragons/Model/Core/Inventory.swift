@@ -22,7 +22,7 @@ struct Inventory {
         items.append(item)
     }
 
-    mutating func take(named itemName: String, color: Color) -> (any Item)? {
+    mutating func remove(named itemName: String, color: Color) -> (any Item)? {
         guard let index = items.firstIndex(where: { $0.name == itemName && $0.color == color }) else {
             return nil
         }
