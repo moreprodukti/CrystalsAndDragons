@@ -7,13 +7,15 @@
 
 final class Room {
     private(set) var items: [any Item]
+    private(set) var gold: Int
     let doors: Set<Direction>
     let position: Position
 
-    init(items: [any Item], doors: Set<Direction>, position: Position) {
+    init(items: [any Item], doors: Set<Direction>, position: Position, gold: Int) {
         self.items = items
         self.doors = doors
         self.position = position
+        self.gold = gold
     }
 
     func hasItem(named itemName: String, color: Color) -> Bool {
@@ -29,5 +31,11 @@ final class Room {
             return nil
         }
         return items.remove(at: index)
+    }
+
+    func takeGold() -> Int {
+        let coins = gold
+        gold = 0
+        return coins
     }
 }

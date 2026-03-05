@@ -15,6 +15,10 @@ public struct CommandParser {
         let tokens = normalizeTokens(input: command)
 
         if tokens.contains("get") {
+            if let gold = goldItem(input: tokens) {
+                return .get(itemName: gold.0, color: gold.1)
+            }
+
             if let key = keyItem(input: tokens) {
                 return .get(itemName: key.0, color: key.1)
             }
@@ -146,5 +150,12 @@ public struct CommandParser {
             return nil
         }
         return ("hearty meat", itemColor)
+    }
+
+    private func goldItem(input: [String]) -> (String, Color)? {
+        guard input.contains("gold") else {
+            return nil
+        }
+        return ("gold", .gold)
     }
 }

@@ -120,8 +120,24 @@ public final class Game {
         return .success(.itemEaten(name: eatedItem.name, color: eatedItem.color))
     }
 
+    public func getGold() -> Result<GameEvent, GameError> {
+        let room = gameMap.rooms[player.position.y][player.position.x]
+        let coins = room.takeGold()
+
+        guard coins > 0 else {
+            return .failure(.noSuchItemHere)
+        }
+
+        player.gold += coins
+        return .success(.goldPicked(coins: coins))
+    }
+
     public func openInventory() -> [any Item] {
         return player.items
+    }
+
+    public func getPlayerGold() -> Int {
+        return player.gold
     }
 
     public func getPlayerHP() -> Int {
@@ -134,6 +150,10 @@ public final class Game {
 
     public func getRoomItems() -> [any Item] {
         return gameMap.getRoomItems(player.position)
+    }
+
+    public func getRoomGold() -> Int {
+        return gameMap.rooms[player.position.y][player.position.x].gold
     }
 
     public func getRoomDirections() -> Set<Direction> {

@@ -263,6 +263,7 @@ public struct GameGenerator {
             var row: [Room] = []
             for x in 0 ..< cols {
                 var items: [any Item] = []
+                var gold = 0
                 let cell = Cell(x: x, y: y)
                 let isActive = active.contains(cell)
 
@@ -292,12 +293,17 @@ public struct GameGenerator {
                             items.append(Meat())
                         }
                     }
+
+                    if Double.random(in: 0 ... 1) < 0.15 {
+                        gold = Int.random(in: 5 ... 20)
+                    }
                 }
 
                 let room = Room(
                     items: items,
                     doors: isActive ? doors[y][x] : [],
-                    position: Position(x: x, y: y)
+                    position: Position(x: x, y: y),
+                    gold: gold
                 )
                 row.append(room)
             }

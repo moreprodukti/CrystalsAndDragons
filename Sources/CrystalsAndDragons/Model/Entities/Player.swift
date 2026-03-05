@@ -10,6 +10,8 @@ import Foundation
 final class Player {
     var health: Int
     var position: Position
+    var gold: Int = 0
+
     private(set) var items: [any Item]
 
     init(health: Int, position: Position, items: [any Item]) {

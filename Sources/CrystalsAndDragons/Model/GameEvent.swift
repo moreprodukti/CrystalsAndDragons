@@ -13,4 +13,5 @@ public enum GameEvent {
     case itemDropped(name: String, color: Color)
     case itemEaten(name: String, color: Color)
     case chestOpened(item: (any Item)?)
+    case goldPicked(coins: Int)
 }

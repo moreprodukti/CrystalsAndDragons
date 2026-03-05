@@ -103,7 +103,11 @@ public final class GameController {
             commandResult = game.movePlayer(direction: direction)
 
         case let .get(itemName, color):
-            commandResult = game.getItem(named: itemName, color: color)
+            if itemName == "gold" {
+                commandResult = game.getGold()
+            } else {
+                commandResult = game.getItem(named: itemName, color: color)
+            }
 
         case let .drop(itemName, color):
             commandResult = game.dropItem(named: itemName, color: color)
@@ -116,12 +120,31 @@ public final class GameController {
 
         case .inventory:
             let items = game.openInventory()
+            let goldCoins = game.getPlayerGold()
 
-            if items.isEmpty {
+            if items.isEmpty, goldCoins == 0 {
                 return ViewMessage(text: "Inventory: []", kind: .info)
             } else {
                 var segments = [ViewMessage.Segment(text: "Inventory: [")]
-                segments.append(contentsOf: itemSegments(for: items))
+                var hasAny = false
+
+                if goldCoins > 0 {
+                    segments.append(
+                        ViewMessage.Segment(
+                            text: "gold coins: \(goldCoins)",
+                            color: .gold
+                        )
+                    )
+                    hasAny = true
+                }
+
+                if !items.isEmpty {
+                    if hasAny {
+                        segments.append(ViewMessage.Segment(text: ", "))
+                    }
+                    segments.append(contentsOf: itemSegments(for: items))
+                }
+
                 segments.append(ViewMessage.Segment(text: "]"))
                 return ViewMessage(segments: segments, kind: .info)
             }
@@ -145,13 +168,29 @@ public final class GameController {
         let directions = game.getRoomDirections()
         let directionText = directions.map(directionText).joined(separator: ", ")
         let items = game.getRoomItems()
+        let roomGold = game.getRoomGold()
 
         var segments = [
             ViewMessage.Segment(
                 text: "You are in the room [\(position.x), \(position.y)]. There are \(directions.count) doors: [\(directionText)]. Items in the room: ["
             ),
         ]
-        segments.append(contentsOf: itemSegments(for: items))
+        var hasAny = false
+        if roomGold > 0 {
+            segments.append(
+                ViewMessage.Segment(
+                    text: "gold coins: \(roomGold)",
+                    color: .gold
+                )
+            )
+            hasAny = true
+        }
+        if !items.isEmpty {
+            if hasAny {
+                segments.append(ViewMessage.Segment(text: ", "))
+            }
+            segments.append(contentsOf: itemSegments(for: items))
+        }
         segments.append(ViewMessage.Segment(text: "]"))
 
         return ViewMessage(segments: segments, kind: .info)
@@ -226,6 +265,15 @@ public final class GameController {
 
             case let .moved(direction):
                 return ViewMessage(text: "You moved \(direction)", kind: .info)
+
+            case let .goldPicked(coins):
+                return ViewMessage(
+                    segments: [
+                        ViewMessage.Segment(text: "You picked up "),
+                        ViewMessage.Segment(text: "\(coins) gold coins", color: .gold),
+                    ],
+                    kind: .success
+                )
             }
 
         case let .failure(error):
