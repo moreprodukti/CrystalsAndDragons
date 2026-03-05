@@ -14,4 +14,5 @@ public enum Color {
     case yellow
     case gold
     case roasted
+    case bright
 }

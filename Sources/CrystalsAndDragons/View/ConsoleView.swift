@@ -154,6 +154,8 @@ public final class ConsoleView {
             return "\u{001B}[93m"
         case .roasted:
             return "\u{001B}[38;5;52m"
+        case .bright:
+            return "\u{001B}[93m"
         }
     }
 }

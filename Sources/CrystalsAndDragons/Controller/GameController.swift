@@ -324,6 +324,7 @@ public final class GameController {
         case .yellow: return .yellow
         case .gold: return .gold
         case .roasted: return .roasted
+        case .bright: return .bright
         }
     }
 }

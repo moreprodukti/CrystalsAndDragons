@@ -15,6 +15,7 @@ public struct ViewMessage {
         case yellow
         case gold
         case roasted
+        case bright
     }
 
     public struct Segment {

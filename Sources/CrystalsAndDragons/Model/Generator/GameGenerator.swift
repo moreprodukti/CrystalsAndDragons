@@ -297,6 +297,10 @@ public struct GameGenerator {
                     if Double.random(in: 0 ... 1) < 0.15 {
                         gold = Int.random(in: 5 ... 20)
                     }
+
+                    if Double.random(in: 0 ... 1) < 0.10 {
+                        items.append(Torchlight())
+                    }
                 }
 
                 let room = Room(
