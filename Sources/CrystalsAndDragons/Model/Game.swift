@@ -35,9 +35,9 @@ public final class Game {
 
         let targetPosition: Position
         switch direction {
-        case .N: targetPosition = Position(x: currentPosition.x, y: currentPosition.y + 1)
+        case .N: targetPosition = Position(x: currentPosition.x, y: currentPosition.y - 1)
 
-        case .S: targetPosition = Position(x: currentPosition.x, y: currentPosition.y - 1)
+        case .S: targetPosition = Position(x: currentPosition.x, y: currentPosition.y + 1)
 
         case .E: targetPosition = Position(x: currentPosition.x + 1, y: currentPosition.y)
 
@@ -111,6 +111,22 @@ public final class Game {
     public func openInventory() -> [any Item] {
         return player.items
     }
-
-    func checkGameStatus() -> GameState { return state }
+    
+    public func getPlayerHP() -> Int {
+        return player.health
+    }
+    
+    public func getPlayerPosition() -> Position {
+        return player.position
+    }
+    
+    public func getRoomItems() -> [any Item] {
+        return gameMap.getRoomItems(player.position)
+    }
+    
+    public func getRoomDirections() -> Set<Direction> {
+        return gameMap.getRoomDirections(player.position)
+    }
+    
+    public func checkGameStatus() -> GameState { return state }
 }

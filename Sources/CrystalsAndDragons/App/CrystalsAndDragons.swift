@@ -1,15 +1,48 @@
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
 import Controller
-import View
 
 @main
 struct CrystalsAndDragons {
     static func main() {
-        let view = ConsoleView()
-        view.showStartScreen()
+        print("Enter number of rooms:")
 
-        let parser = CommandParser()
-        print(parser.parse(command: "inv") as Any)
+        guard
+            let input = readLine(),
+            let roomCount = Int(input),
+            roomCount > 0
+        else {
+            print("Invalid room count")
+            return
+        }
+
+        let controller: GameController
+        do {
+            controller = try GameController(roomCount: roomCount)
+        } catch {
+            print("Failed to generate game: \(error)")
+            return
+        }
+
+        controller.startScreen()
+        controller.sendResponse(controller.playerInfo())
+        controller.sendResponse(controller.playerPosition())
+
+        while true {
+            let command = controller.getCommand()
+
+            if case .quit = command {
+                break
+            }
+
+            let response = controller.runCommand(command)
+            controller.sendResponse(response)
+            controller.sendResponse(controller.playerInfo())
+            controller.sendResponse(controller.playerPosition())
+
+            if controller.isGameFinished() {
+                break
+            }
+        }
     }
 }

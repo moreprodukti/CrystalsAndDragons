@@ -14,9 +14,14 @@ public final class GameController {
     private let view: ConsoleView
     private let parser = CommandParser()
 
-    init(game: Game, view: ConsoleView) {
+    public init(game: Game, view: ConsoleView) {
         self.game = game
         self.view = view
+    }
+
+    public convenience init(roomCount: Int) throws {
+        let game = try GameGenerator().generate(roomCount: roomCount)
+        self.init(game: game, view: ConsoleView())
     }
 
     public func getCommand() -> Command {
@@ -46,7 +51,7 @@ public final class GameController {
             let items = game.openInventory()
             
             if items.isEmpty {
-                return ViewMessage(text: "Inventory: empty", kind: .info)
+                return ViewMessage(text: "Inventory: Empty", kind: .info)
             } else {
                 let itemsStr = items.map { "\($0.color) \($0.name)"}
                 return ViewMessage(text: "Inventory: [\(itemsStr.joined(separator: ", "))]", kind: .info)
@@ -63,6 +68,49 @@ public final class GameController {
     
     public func sendResponse(_ response: ViewMessage) {
         view.showMessage(response)
+    }
+    
+    public func playerInfo() -> ViewMessage {
+        return ViewMessage(text: "HP: \(game.getPlayerHP())", kind: .info)
+    }
+    
+    public func playerPosition() -> ViewMessage {
+        let position = game.getPlayerPosition()
+        let directions = game.getRoomDirections()
+        let directionText = directions.map(directionText).joined(separator: ", ")
+        let items = game.getRoomItems().map { "\($0.color) \($0.name)" }
+        let itemsText = items.joined(separator: ", ")
+
+        return ViewMessage(
+            text: "You are in the room [\(position.x), \(position.y)]. There are \(directions.count) doors: [\(directionText)]. Items in the room: [\(itemsText)]",
+            kind: .info
+        )
+    }
+    
+    public func startScreen() {
+        view.showStartScreen()
+    }
+
+    public func isGameFinished() -> Bool {
+        switch game.checkGameStatus() {
+        case .playing:
+            return false
+        case .win:
+            view.victory()
+            return true
+        case .lost:
+            view.gameOver()
+            return true
+        }
+    }
+    
+    private func directionText(_ d: Direction) -> String {
+        switch d {
+        case .N: return "N"
+        case .S: return "S"
+        case .E: return "E"
+        case .W: return "W"
+        }
     }
     
     private func mapToViewMessage(_ result: Result<GameEvent, GameError>) -> ViewMessage {

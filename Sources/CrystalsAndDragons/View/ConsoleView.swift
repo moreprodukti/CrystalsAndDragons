@@ -26,7 +26,7 @@ public final class ConsoleView {
         
         ╔══════════════════════════════════════════════════════╗
         ║                                                      ║
-        ║     ✨✨✨  VICTORY! ✨✨✨                         ║
+        ║     ✨✨✨  VICTORY! ✨✨✨                          ║
         ║                                                      ║
         ║     You have found the Holy Grail!                   ║
         ║     The ancient prophecy is fulfilled...             ║
@@ -100,5 +100,4 @@ public final class ConsoleView {
         ╚════════════════════════════════════════════════════════════════════╝    
         """#)
     }
-    
 }

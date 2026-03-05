@@ -7,9 +7,9 @@
 
 import Foundation
 
-struct Position {
-    let x: Int
-    let y: Int
+public struct Position {
+    public let x: Int
+    public let y: Int
 
     init(x: Int, y: Int) {
         self.x = x

@@ -173,11 +173,11 @@ public struct GameGenerator {
     private func neighbors(of cell: Cell, rows: Int, cols: Int) -> [(cell: Cell, direction: Direction)] {
         var result: [(cell: Cell, direction: Direction)] = []
 
-        if cell.y + 1 < rows {
-            result.append((Cell(x: cell.x, y: cell.y + 1), .N))
-        }
         if cell.y - 1 >= 0 {
-            result.append((Cell(x: cell.x, y: cell.y - 1), .S))
+            result.append((Cell(x: cell.x, y: cell.y - 1), .N))
+        }
+        if cell.y + 1 < rows {
+            result.append((Cell(x: cell.x, y: cell.y + 1), .S))
         }
         if cell.x + 1 < cols {
             result.append((Cell(x: cell.x + 1, y: cell.y), .E))
@@ -236,9 +236,9 @@ public struct GameGenerator {
     private func move(from cell: Cell, direction: Direction) -> Cell {
         switch direction {
         case .N:
-            return Cell(x: cell.x, y: cell.y + 1)
-        case .S:
             return Cell(x: cell.x, y: cell.y - 1)
+        case .S:
+            return Cell(x: cell.x, y: cell.y + 1)
         case .E:
             return Cell(x: cell.x + 1, y: cell.y)
         case .W:
