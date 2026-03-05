@@ -92,6 +92,11 @@ public struct GameGenerator {
                 pairColors: pairColors,
                 grailPairIndex: 0
             )
+            ensureTorchlightIfNeeded(
+                rooms: rooms,
+                active: activeSet,
+                start: start
+            )
             let player = Player(health: health, position: Position(x: start.x, y: start.y), items: [])
             let map = GameMap(rooms: rooms)
             return Game(player: player, gameMap: map)
@@ -282,7 +287,7 @@ public struct GameGenerator {
                             if index == grailPairIndex {
                                 items.append(Chest(color: pairColors[index], item: Grail()))
                             } else {
-                                if Double.random(in: 0 ... 1) < 0.33 {
+                                if Double.random(in: 0 ... 1) < 0.99 {
                                     items.append(Chest(color: pairColors[index], item: Meat()))
                                 } else {
                                     items.append(Chest(color: pairColors[index], item: nil))
@@ -322,5 +327,31 @@ public struct GameGenerator {
             roomGrid.append(row)
         }
         return roomGrid
+    }
+
+    private func ensureTorchlightIfNeeded(
+        rooms: [[Room]],
+        active: Set<Cell>,
+        start: Cell
+    ) {
+        let hasDarkRooms = active.contains { cell in
+            rooms[cell.y][cell.x].isDark
+        }
+        guard hasDarkRooms else {
+            return
+        }
+
+        let hasTorchlight = active.contains { cell in
+            rooms[cell.y][cell.x].items.contains { $0 is Torchlight }
+        }
+        guard !hasTorchlight else {
+            return
+        }
+
+        let lightCells = active.filter { cell in
+            !rooms[cell.y][cell.x].isDark
+        }
+        let target = lightCells.randomElement() ?? start
+        rooms[target.y][target.x].putItem(Torchlight())
     }
 }
