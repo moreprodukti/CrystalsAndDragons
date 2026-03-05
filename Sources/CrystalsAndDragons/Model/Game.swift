@@ -108,6 +108,18 @@ public final class Game {
         return .success(.chestOpened(item: chestItem))
     }
 
+    public func eatItem(named itemName: String, color: Color) -> Result<GameEvent, GameError> {
+        guard player.hasItem(named: itemName, color: color) else {
+            return .failure(.noSuchItemInInventory)
+        }
+
+        guard let eatedItem = player.eatItem(named: itemName, color: color) else {
+            return .failure(.noSuchItemInInventory)
+        }
+
+        return .success(.itemEaten(name: eatedItem.name, color: eatedItem.color))
+    }
+
     public func openInventory() -> [any Item] {
         return player.items
     }

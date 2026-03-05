@@ -280,11 +280,13 @@ public struct GameGenerator {
                             } else {
                                 if Double.random(in: 0 ... 1) < 0.33 {
                                     items.append(Chest(color: pairColors[index], item: Meat()))
+                                } else {
+                                    items.append(Chest(color: pairColors[index], item: nil))
                                 }
                             }
                         }
                     }
-                    
+
                     if !items.contains(where: { $0 is Chest }) {
                         if Double.random(in: 0 ... 1) < 0.15 {
                             items.append(Meat())

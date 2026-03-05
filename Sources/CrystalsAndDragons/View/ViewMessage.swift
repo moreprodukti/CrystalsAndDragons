@@ -38,7 +38,7 @@ public struct ViewMessage {
     public let kind: Kind
 
     public init(text: String, kind: Kind) {
-        self.segments = [Segment(text: text)]
+        segments = [Segment(text: text)]
         self.kind = kind
     }
 

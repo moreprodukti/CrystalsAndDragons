@@ -18,11 +18,11 @@ public struct CommandParser {
             if let key = keyItem(input: tokens) {
                 return .get(itemName: key.0, color: key.1)
             }
-            
+
             if let meat = meatItem(input: tokens) {
                 return .get(itemName: meat.0, color: meat.1)
             }
-            
+
             return .parseError
         }
 
@@ -30,12 +30,20 @@ public struct CommandParser {
             if let key = keyItem(input: tokens) {
                 return .drop(itemName: key.0, color: key.1)
             }
-            
+
             if let meat = meatItem(input: tokens) {
                 return .drop(itemName: meat.0, color: meat.1)
             }
-            
+
             return .parseError
+        }
+
+        if tokens.contains("eat") {
+            guard let meat = meatItem(input: tokens) else {
+                return .parseError
+            }
+
+            return .eat(itemName: meat.0, color: meat.1)
         }
 
         if tokens.contains("inv") {
@@ -95,7 +103,7 @@ public struct CommandParser {
         if input.contains("green") {
             itemColor = .green
         }
-        
+
         if input.contains("roasted") {
             itemColor = .roasted
         }
@@ -128,9 +136,9 @@ public struct CommandParser {
         }
         return ("key", itemColor)
     }
-    
+
     private func meatItem(input: [String]) -> (String, Color)? {
-        guard input.contains("hearty") && input.contains("meat")else {
+        guard input.contains("hearty"), input.contains("meat") else {
             return nil
         }
 

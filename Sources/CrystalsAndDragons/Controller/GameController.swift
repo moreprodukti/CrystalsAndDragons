@@ -108,6 +108,9 @@ public final class GameController {
         case let .drop(itemName, color):
             commandResult = game.dropItem(named: itemName, color: color)
 
+        case let .eat(itemName, color):
+            commandResult = game.eatItem(named: itemName, color: color)
+
         case .open:
             commandResult = game.takeItemFromChest()
 
@@ -115,7 +118,7 @@ public final class GameController {
             let items = game.openInventory()
 
             if items.isEmpty {
-                return ViewMessage(text: "Inventory: Empty", kind: .info)
+                return ViewMessage(text: "Inventory: []", kind: .info)
             } else {
                 var segments = [ViewMessage.Segment(text: "Inventory: [")]
                 segments.append(contentsOf: itemSegments(for: items))
@@ -146,7 +149,7 @@ public final class GameController {
         var segments = [
             ViewMessage.Segment(
                 text: "You are in the room [\(position.x), \(position.y)]. There are \(directions.count) doors: [\(directionText)]. Items in the room: ["
-            )
+            ),
         ]
         segments.append(contentsOf: itemSegments(for: items))
         segments.append(ViewMessage.Segment(text: "]"))
@@ -194,6 +197,16 @@ public final class GameController {
                     segments: [
                         ViewMessage.Segment(text: "You dropped "),
                         colorizeItem(name: name, color: color),
+                    ],
+                    kind: .success
+                )
+
+            case let .itemEaten(name, color):
+                return ViewMessage(
+                    segments: [
+                        ViewMessage.Segment(text: "You ate "),
+                        colorizeItem(name: name, color: color),
+                        ViewMessage.Segment(text: "\nHP +1"),
                     ],
                     kind: .success
                 )

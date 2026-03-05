@@ -32,4 +32,12 @@ final class Player {
         }
         return items.remove(at: index)
     }
+
+    func eatItem(named itemName: String, color: Color) -> (any Item)? {
+        defer { health += 1 }
+        guard let index = items.firstIndex(where: { $0.name == itemName && $0.color == color }) else {
+            return nil
+        }
+        return items.remove(at: index)
+    }
 }

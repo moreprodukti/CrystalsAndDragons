@@ -76,11 +76,11 @@ public final class ConsoleView {
             
         """)
     }
-    
+
     public func chooseAction() {
         print("Your action? (N/S/W/E, open, get, drop, quit)\n")
     }
-    
+
     public func showStartScreen() {
         print(#"""
 
@@ -123,6 +123,7 @@ public final class ConsoleView {
         ║         • get <item>         - Pick up item                        ║
         ║         • open <chest>       - Open chest                          ║
         ║         • inv                - Check inventory                     ║
+        ║         • eat <item>
         ║         • drop <item>        - Drop item                           ║
         ║         • quit               - Exit game                           ║
         ║                                                                    ║
