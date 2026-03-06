@@ -23,7 +23,7 @@ public struct GameGenerator {
 
     public init() {}
 
-    public func generate(roomCount: Int, maxAttempts: Int = 100) throws -> Game {
+    public func generate(roomCount: Int) throws -> Game {
         guard roomCount > 0 else {
             throw GameGenerationError.invalidRoomCount
         }
@@ -38,73 +38,70 @@ public struct GameGenerator {
             throw GameGenerationError.cannotSatisfyConstraints
         }
 
-        for _ in 0 ..< maxAttempts {
-            let doorGrid = generateConnectedDoors(rows: rows, cols: cols, active: activeSet)
+        let doorGrid = generateConnectedDoors(rows: rows, cols: cols, active: activeSet)
 
-            guard let start = activeSet.randomElement() else {
-                continue
-            }
-
-            let roomForPairs = activeSet.filter { $0 != start }
-            guard roomForPairs.count >= pairCount * 2 else {
-                continue
-            }
-
-            let shuffled = roomForPairs.shuffled()
-            let keyCells = Array(shuffled.prefix(pairCount))
-            let chestCells = Array(shuffled.dropFirst(pairCount).prefix(pairCount))
-
-            guard keyCells.count == pairCount, chestCells.count == pairCount else {
-                continue
-            }
-
-            let grailKeyCell = keyCells[0]
-            let grailChestCell = chestCells[0]
-
-            let fromStart = bfsDistances(from: start, doors: doorGrid, rows: rows, cols: cols)
-            let fromGrailKey = bfsDistances(from: grailKeyCell, doors: doorGrid, rows: rows, cols: cols)
-
-            guard
-                let stepsToKey = fromStart[grailKeyCell],
-                let stepsKeyToChest = fromGrailKey[grailChestCell]
-            else {
-                continue
-            }
-
-            let minimumRequired = stepsToKey + stepsKeyToChest
-            let health = max(
-                10,
-                minimumRequired * Self.healthBufferMultiplier + Self.healthFlatBonus
-            )
-
-            let colorsPool: [Color] = [.red, .green, .blue, .yellow]
-            let pairColors = Array(colorsPool.shuffled().prefix(pairCount))
-
-            let rooms = buildRooms(
-                rows: rows,
-                cols: cols,
-                active: activeSet,
-                doors: doorGrid,
-                start: start,
-                keyCells: keyCells,
-                chestCells: chestCells,
-                pairColors: pairColors,
-                grailPairIndex: 0
-            )
-            ensureTorchlightIfNeeded(
-                rooms: rooms,
-                active: activeSet,
-                start: start,
-                doors: doorGrid,
-                rows: rows,
-                cols: cols
-            )
-            let player = Player(health: health, position: Position(x: start.x, y: start.y), items: [])
-            let map = GameMap(rooms: rooms)
-            return Game(player: player, gameMap: map)
+        guard let start = activeSet.randomElement() else {
+            throw GameGenerationError.cannotSatisfyConstraints
         }
 
-        throw GameGenerationError.cannotSatisfyConstraints
+        let roomForPairs = activeSet.filter { $0 != start }
+        guard roomForPairs.count >= pairCount * 2 else {
+            throw GameGenerationError.cannotSatisfyConstraints
+        }
+
+        let shuffled = roomForPairs.shuffled()
+        let keyCells = Array(shuffled.prefix(pairCount))
+        let chestCells = Array(shuffled.dropFirst(pairCount).prefix(pairCount))
+
+        guard keyCells.count == pairCount, chestCells.count == pairCount else {
+            throw GameGenerationError.cannotSatisfyConstraints
+        }
+
+        let grailKeyCell = keyCells[0]
+        let grailChestCell = chestCells[0]
+
+        let fromStart = bfsDistances(from: start, doors: doorGrid, rows: rows, cols: cols)
+        let fromGrailKey = bfsDistances(from: grailKeyCell, doors: doorGrid, rows: rows, cols: cols)
+
+        guard
+            let stepsToKey = fromStart[grailKeyCell],
+            let stepsKeyToChest = fromGrailKey[grailChestCell]
+        else {
+            throw GameGenerationError.cannotSatisfyConstraints
+        }
+
+        let minimumRequired = stepsToKey + stepsKeyToChest
+        let health = max(
+            10,
+            minimumRequired * Self.healthBufferMultiplier + Self.healthFlatBonus
+        )
+
+        let colorsPool: [Color] = [.red, .green, .blue, .yellow]
+        let pairColors = Array(colorsPool.shuffled().prefix(pairCount))
+
+        let rooms = buildRooms(
+            rows: rows,
+            cols: cols,
+            active: activeSet,
+            doors: doorGrid,
+            start: start,
+            keyCells: keyCells,
+            chestCells: chestCells,
+            pairColors: pairColors,
+            grailPairIndex: 0
+        )
+        ensureTorchlightIfNeeded(
+            rooms: rooms,
+            active: activeSet,
+            start: start,
+            doors: doorGrid,
+            rows: rows,
+            cols: cols
+        )
+
+        let player = Player(health: health, position: Position(x: start.x, y: start.y), items: [])
+        let map = GameMap(rooms: rooms)
+        return Game(player: player, gameMap: map)
     }
 
     private func dimensions(for roomCount: Int) -> (rows: Int, cols: Int) {
@@ -355,9 +352,8 @@ public struct GameGenerator {
             return
         }
 
-        guard let path = shortestPath(from: start, to: targetDark, doors: doors, rows: rows, cols: cols) else {
-            return
-        }
+        let path = shortestPath(from: start, to: targetDark, doors: doors, rows: rows, cols: cols)
+            ?? [start, targetDark]
 
         let lightPath = path.dropLast().filter { !rooms[$0.y][$0.x].isDark }
         let hasTorchOnPath = lightPath.contains { cell in

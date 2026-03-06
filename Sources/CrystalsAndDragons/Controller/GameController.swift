@@ -76,6 +76,7 @@ public final class GameController {
 
             if let response = runCommand(command) {
                 view.showMessage(response)
+                view.line()
             }
             if isGameFinished() {
                 break
@@ -175,16 +176,12 @@ public final class GameController {
         let position = game.getPlayerPosition()
 
         guard !game.isRoomDark(position) || game.canSeeRoom(position) else {
+            var segments = [ViewMessage.Segment(text: "Can’t see anything in this dark place!")]
             if let escape = game.darkRoomEscapeDirection(position) {
-                let segment = [
-                    ViewMessage.Segment(text: "Can’t see anything in this dark place! "),
-                    ViewMessage.Segment(text: "Only way out: [\(directionText(escape))]."),
-                ]
-                return ViewMessage(segments: segment, kind: .info)
+                segments.append(ViewMessage.Segment(text: " "))
+                segments.append(ViewMessage.Segment(text: "Only way out: [\(directionText(escape))]."))
             }
-
-            let segment = [ViewMessage.Segment(text: "Can’t see anything in this dark place!")]
-            return ViewMessage(segments: segment, kind: .info)
+            return ViewMessage(segments: segments, kind: .info)
         }
 
         let directions = game.getRoomDirections()

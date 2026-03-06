@@ -17,7 +17,7 @@ public final class ConsoleView {
     }
 
     public func showRoomCountPrompt() {
-        print("Hello! Let's play the game! First enter number of rooms:")
+        print("Hello! Let's play the game! First enter number of rooms (at least 3 rooms):")
     }
 
     public func readRoomCount() -> Int? {
@@ -80,7 +80,11 @@ public final class ConsoleView {
     public func chooseAction() {
         print("Your action? (N/S/W/E, open, eat, get, drop, inv, quit)\n")
     }
-
+    
+    public func line() {
+        print("----------------------------------------------------------------")
+    }
+    
     public func showStartScreen() {
         print(#"""
 

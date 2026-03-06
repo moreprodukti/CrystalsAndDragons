@@ -18,7 +18,7 @@ The player explores a labyrinth of rooms, interacts with items, and tries to fin
 swift run
 ```
 
-4. Enter the number of rooms to generate the labyrinth
+4. Enter the number of rooms to generate the labyrinth (at least 3 rooms)
 
 ---
 

@@ -35,9 +35,10 @@ let package = Package(
             name: "App",
             dependencies: ["Controller"],
             path: "Sources/CrystalsAndDragons/App"
-//            swiftSettings: [
-//                .unsafeFlags(["-warnings-as-errors"])
-//            ]
+        ),
+        .testTarget(
+            name: "CrystalsAndDragonsTests",
+            dependencies: ["Model", "Controller"]
         ),
     ]
 )
