@@ -68,7 +68,7 @@ public final class ConsoleView {
             
         ╔══════════════════════════════════════════════════════╗
         ║                                                      ║
-        ║            💀💀💀  GAME OVER  💀💀💀                ║
+        ║            💀💀💀  GAME OVER  💀💀💀                 ║
         ║                                                      ║
         ║            Your journey ends here...                 ║
         ║                                                      ║
@@ -119,7 +119,7 @@ public final class ConsoleView {
         ║                Find the Holy Grail and claim your destiny!         ║
         ║                                                                    ║
         ║        Commands:                                                   ║
-        ║         • move <n/s/w/e>     - Move between rooms                  ║
+        ║         • <n/s/w/e>          - Move between rooms                  ║
         ║         • get <item>         - Pick up item                        ║
         ║         • open <chest>       - Open chest                          ║
         ║         • inv                - Check inventory                     ║

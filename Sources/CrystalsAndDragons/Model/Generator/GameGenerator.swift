@@ -18,7 +18,6 @@ public struct GameGenerator {
         let y: Int
     }
 
-    private static let extraEdgeChance: Double = 0.33
     private static let healthBufferMultiplier: Int = 3
     private static let healthFlatBonus: Int = 6
 
@@ -95,7 +94,10 @@ public struct GameGenerator {
             ensureTorchlightIfNeeded(
                 rooms: rooms,
                 active: activeSet,
-                start: start
+                start: start,
+                doors: doorGrid,
+                rows: rows,
+                cols: cols
             )
             let player = Player(health: health, position: Position(x: start.x, y: start.y), items: [])
             let map = GameMap(rooms: rooms)
@@ -167,7 +169,7 @@ public struct GameGenerator {
                     guard !alreadyConnected else {
                         continue
                     }
-                    if Double.random(in: 0 ... 1) < Self.extraEdgeChance {
+                    if Double.random(in: 0 ... 1) < 0.22 {
                         connect(cell, neighbor.cell, direction: neighbor.direction, doors: &doors)
                     }
                 }
@@ -287,7 +289,7 @@ public struct GameGenerator {
                             if index == grailPairIndex {
                                 items.append(Chest(color: pairColors[index], item: Grail()))
                             } else {
-                                if Double.random(in: 0 ... 1) < 0.99 {
+                                if Double.random(in: 0 ... 1) < 0.33 {
                                     items.append(Chest(color: pairColors[index], item: Meat()))
                                 } else {
                                     items.append(Chest(color: pairColors[index], item: nil))
@@ -297,7 +299,7 @@ public struct GameGenerator {
                     }
 
                     if !items.contains(where: { $0 is Chest }) {
-                        if Double.random(in: 0 ... 1) < 0.15 {
+                        if Double.random(in: 0 ... 1) < 0.33 {
                             items.append(Meat())
                         }
                     }
@@ -332,7 +334,10 @@ public struct GameGenerator {
     private func ensureTorchlightIfNeeded(
         rooms: [[Room]],
         active: Set<Cell>,
-        start: Cell
+        start: Cell,
+        doors: [[Set<Direction>]],
+        rows: Int,
+        cols: Int
     ) {
         let hasDarkRooms = active.contains { cell in
             rooms[cell.y][cell.x].isDark
@@ -341,17 +346,84 @@ public struct GameGenerator {
             return
         }
 
-        let hasTorchlight = active.contains { cell in
-            rooms[cell.y][cell.x].items.contains { $0 is Torchlight }
-        }
-        guard !hasTorchlight else {
+        let distances = bfsDistances(from: start, doors: doors, rows: rows, cols: cols)
+        let nearestDarkRoom = active
+            .filter { rooms[$0.y][$0.x].isDark }
+            .min { (distances[$0] ?? .max) < (distances[$1] ?? .max) }
+
+        guard let targetDark = nearestDarkRoom else {
             return
         }
 
-        let lightCells = active.filter { cell in
-            !rooms[cell.y][cell.x].isDark
+        guard let path = shortestPath(from: start, to: targetDark, doors: doors, rows: rows, cols: cols) else {
+            return
         }
-        let target = lightCells.randomElement() ?? start
+
+        let lightPath = path.dropLast().filter { !rooms[$0.y][$0.x].isDark }
+        let hasTorchOnPath = lightPath.contains { cell in
+            rooms[cell.y][cell.x].items.contains { $0 is Torchlight }
+        }
+        guard !hasTorchOnPath else {
+            return
+        }
+
+        let target = lightPath.last ?? start
         rooms[target.y][target.x].putItem(Torchlight())
+    }
+
+    private func shortestPath(
+        from start: Cell,
+        to target: Cell,
+        doors: [[Set<Direction>]],
+        rows: Int,
+        cols: Int
+    ) -> [Cell]? {
+        guard start != target else {
+            return [start]
+        }
+
+        var parents: [Cell: Cell] = [:]
+        var visited: Set<Cell> = [start]
+        var queue: [Cell] = [start]
+        var index = 0
+        var found = false
+
+        while index < queue.count {
+            let current = queue[index]
+            index += 1
+
+            if current == target {
+                found = true
+                break
+            }
+
+            for direction in doors[current.y][current.x] {
+                let next = move(from: current, direction: direction)
+                guard next.x >= 0, next.x < cols, next.y >= 0, next.y < rows else {
+                    continue
+                }
+                guard !visited.contains(next) else {
+                    continue
+                }
+                visited.insert(next)
+                parents[next] = current
+                queue.append(next)
+            }
+        }
+
+        guard found || parents[target] != nil else {
+            return nil
+        }
+
+        var path: [Cell] = [target]
+        var cursor = target
+        while cursor != start {
+            guard let parent = parents[cursor] else {
+                return nil
+            }
+            path.append(parent)
+            cursor = parent
+        }
+        return path.reversed()
     }
 }
