@@ -80,11 +80,11 @@ public final class ConsoleView {
     public func chooseAction() {
         print("Your action? (N/S/W/E, open, eat, get, drop, inv, quit)\n")
     }
-    
+
     public func line() {
         print("----------------------------------------------------------------")
     }
-    
+
     public func showStartScreen() {
         print(#"""
 

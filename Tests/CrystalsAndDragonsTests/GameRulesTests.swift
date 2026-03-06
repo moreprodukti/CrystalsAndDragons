@@ -1,5 +1,5 @@
-import XCTest
 @testable import Model
+import XCTest
 
 final class GameRulesTests: XCTestCase {
     func testOpenChestUsesRequestedColor() {

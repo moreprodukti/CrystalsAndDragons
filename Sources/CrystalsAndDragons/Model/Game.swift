@@ -13,7 +13,7 @@ public final class Game {
     private var forcedDarkExitDirection: Direction?
     private var forcedDarkRoomPosition: Position?
 
-    var state: GameState {
+    private var state: GameState {
         if player.health <= 0 {
             return .lost
         }

@@ -1,5 +1,5 @@
-import XCTest
 @testable import Model
+import XCTest
 
 final class GameGeneratorTests: XCTestCase {
     func testGenerateInvalidRoomCountThrows() {

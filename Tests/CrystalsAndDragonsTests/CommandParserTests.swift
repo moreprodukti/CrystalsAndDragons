@@ -1,6 +1,6 @@
-import XCTest
 @testable import Controller
 @testable import Model
+import XCTest
 
 final class CommandParserTests: XCTestCase {
     func testTorchlightWithoutColorDefaultsToBright() {
